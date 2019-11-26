@@ -111,3 +111,43 @@ test_gcp_dks@cloudshell:~$ tkn taskrun logs echo-hello-world-task-run
 E1119 16:35:48.883505     620 metadata.go:241] Failed to unmarshal scopes: invalid character 'e' looking for beginning of value
 [echo] hello world
 ```
+
+#### Task Inputs and Outputs
+```bash
+
+$ kubectl create secret docker-registry regcred \
+                    --docker-server=${DOCKER_SERVER} \
+                    --docker-username=${DOCKER_USERNAME} \
+                    --docker-password=${DOCKER_PASSWORD} \
+                    --docker-email=${DOCKER_EMAIL}
+
+$ cat <<EOS | kubectl apply -f -
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: build-docker-image-from-git-source-task-run
+spec:
+  serviceAccountName: tutorial-service
+  taskRef:
+    name: build-docker-image-from-git-source
+  inputs:
+    resources:
+      - name: docker-source
+        resourceRef:
+          name: skaffold-git
+    params:
+      - name: pathToDockerFile
+        value: Dockerfile
+      - name: pathToContext
+        value: /workspace/docker-source/examples/microservices/leeroy-web #configure: may change according to your source
+  outputs:
+    resources:
+      - name: builtImage
+        resourceRef:
+          name: skaffold-image-leeroy-web
+EOS
+
+$ kubectl get tekton-pipelines
+
+$ tkn taskrun describe build-docker-image-from-git-source-task-run
+```
